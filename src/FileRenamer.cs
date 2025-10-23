@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 // Принцип работы программы:
 // 
@@ -117,8 +118,13 @@ internal static class FileRenamer
     // Метод для переименования файла на основе нового имени и его расположения (чтобы проверить свободные названия)
     private static void FileMove(FileInfo file, string newFileName, DirectoryInfo dir)
     {
+        Mutex mtx = new(true, "RenamerSync", out bool isOwner);
+
+        if(!isOwner)
+            mtx.WaitOne();
         string newPath = GetNewFilePath(file, newFileName, dir);
         file.MoveTo(newPath);
+        mtx.ReleaseMutex();
     }
 
     // Метод для получения нового свободного пути для файла:
